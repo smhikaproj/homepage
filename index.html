@@ -12,11 +12,32 @@
     <link rel="stylesheet" href="index.style.css">
 </head>
 <body>
-    <div class="day"></div>
-    <div class="time"></div>
-    <div class="eventday"></div>
-    <div class="search"></div>
-    <div class="favorite"></div>
+    <header>
+        <div class="wether">
+            <div class="weather-icon"><button>a</button></div>
+            <div class="weather-text"></div>
+        </div>
+        <div class="eventday"></div>
+    </header>
+    <main>
+        <div class="center">
+            <div class="time-day"><p class="time">HH:mm:ss</p><p class="day">yyyy年mm月dd日(ddd)</p></div>
+            <div class="search">
+                <form action="https://google.com/search" method="get">
+                    <input type="search" name="q" id="q" class="search-input" placeholder="検索">
+                    <input type="submit" value="">
+                </form>
+                <script async src="https://cse.google.com/cse.js?cx=35801c69d542c47eb">
+</script>
+<div class="gcse-search"></div>
+            </div>
+        </div>
+        <div class="center-sub">
+            <div class="favorite"></div>
+        </div>
+    </main>
+    
+    
     <!--JS-->
     <script src="script.js"></script>
     <script src="index.script.js"></script>
