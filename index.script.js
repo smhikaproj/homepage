@@ -1,3 +1,12 @@
+if (localStorage.getItem('events') == null) {
+    localStorage.setItem('events', JSON.stringify([
+        {"title": "夏休み", "start": "2025-07-19", "end": "2025-08-32" },
+        { "title": "夏季授業日", "start": "2025-08-27", "end": "2025-08-29" },
+        { "title": "8月実力考査", "start": "2025-8-28", "end": "2025-8-29" }
+    ]));
+}
+
+
 setInterval(() => {
     const date = new Date();
     const year = date.getFullYear();
@@ -55,8 +64,11 @@ dialog.addEventListener('pointerup', function(event) {
 // 左上のミニカレンダー
 document.addEventListener('DOMContentLoaded', function() {
     var calendarEl = document.getElementById('calendar');
+
     const nowdate = new Date();
     var date = nowdate.getFullYear() + '-' + (nowdate.getMonth() + 1).toString().padStart(2, '0') + '-' + nowdate.getDate().toString().padStart(2, '0');
+
+    localStorage.getItem
     var calendar = new FullCalendar.Calendar(calendarEl, {
         headerToolbar: {
             left: 'prev,next today',
@@ -77,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // fixedWeekCount: false,
         businessHours: true,
         // weekends: false,
-        events: []
+        events: JSON.parse(localStorage.getItem('events'))
     });
     calendar.render();
 });
