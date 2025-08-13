@@ -63,7 +63,7 @@ dialog.addEventListener('pointerup', function(event) {
 
 // 左上のミニカレンダー
 document.addEventListener('DOMContentLoaded', function() {
-    var calendarEl = document.getElementById('calendar');
+    var calendarEl = document.getElementById('mini_calendar');
 
     const nowdate = new Date();
     var date = nowdate.getFullYear() + '-' + (nowdate.getMonth() + 1).toString().padStart(2, '0') + '-' + nowdate.getDate().toString().padStart(2, '0');
