@@ -93,3 +93,84 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     calendar.render();
 });
+
+// mini-calendarのドラッグ移動・リサイズ機能
+(function() {
+    const miniCalEl = document.querySelector('.mini-calendar');
+    let miniCalDrag = false;
+    let miniCalResize = false;
+    let miniCalDragOffsetX = 0;
+    let miniCalDragOffsetY = 0;
+    let miniCalResizeStartW = 0;
+    let miniCalResizeStartH = 0;
+    let miniCalResizeStartX = 0;
+    let miniCalResizeStartY = 0;
+
+    // リサイズハンドルを追加
+    const miniCalResizeHandle = document.createElement('div');
+    miniCalResizeHandle.style.position = 'absolute';
+    miniCalResizeHandle.style.width = '18px';
+    miniCalResizeHandle.style.height = '18px';
+    miniCalResizeHandle.style.right = '0';
+    miniCalResizeHandle.style.bottom = '0';
+    miniCalResizeHandle.style.cursor = 'se-resize';
+    miniCalResizeHandle.style.background = 'rgba(180,180,180,0.3)';
+    miniCalResizeHandle.style.borderRadius = '0 0 8px 0';
+    miniCalResizeHandle.style.zIndex = '100004';
+    miniCalEl.appendChild(miniCalResizeHandle);
+
+    // ドラッグ開始
+    miniCalEl.addEventListener('pointerdown', function(e) {
+        // リサイズハンドル上ならリサイズ
+        if (e.target === miniCalResizeHandle) {
+            miniCalResize = true;
+            miniCalResizeStartW = miniCalEl.offsetWidth;
+            miniCalResizeStartH = miniCalEl.offsetHeight;
+            miniCalResizeStartX = e.clientX;
+            miniCalResizeStartY = e.clientY;
+            miniCalEl.setPointerCapture(e.pointerId);
+            e.preventDefault();
+            return;
+        }
+        // mini-calendar本体の上部20pxだけドラッグ可能にする
+        const rect = miniCalEl.getBoundingClientRect();
+        if (e.clientY - rect.top < 30) {
+            miniCalDrag = true;
+            miniCalDragOffsetX = e.clientX - rect.left;
+            miniCalDragOffsetY = e.clientY - rect.top;
+            miniCalEl.style.position = 'fixed';
+            miniCalEl.style.left = rect.left + 'px';
+            miniCalEl.style.top = rect.top + 'px';
+            miniCalEl.setPointerCapture(e.pointerId);
+            e.preventDefault();
+        }
+    });
+
+    // ドラッグ・リサイズ中の移動
+    miniCalEl.addEventListener('pointermove', function(e) {
+        if (miniCalDrag) {
+            let newLeft = e.clientX - miniCalDragOffsetX;
+            let newTop = e.clientY - miniCalDragOffsetY;
+            // 画面外に出ないように制限
+            newLeft = Math.max(0, Math.min(window.innerWidth - miniCalEl.offsetWidth, newLeft));
+            newTop = Math.max(0, Math.min(window.innerHeight - miniCalEl.offsetHeight, newTop));
+            miniCalEl.style.left = newLeft + 'px';
+            miniCalEl.style.top = newTop + 'px';
+        }
+        if (miniCalResize) {
+            let newW = miniCalResizeStartW + (e.clientX - miniCalResizeStartX);
+            let newH = miniCalResizeStartH + (e.clientY - miniCalResizeStartY);
+            newW = Math.max(180, Math.min(window.innerWidth, newW));
+            newH = Math.max(180, Math.min(window.innerHeight, newH));
+            miniCalEl.style.width = newW + 'px';
+            miniCalEl.style.height = newH + 'px';
+        }
+    });
+
+    // ドラッグ・リサイズ終了
+    miniCalEl.addEventListener('pointerup', function(e) {
+        miniCalDrag = false;
+        miniCalResize = false;
+        miniCalEl.releasePointerCapture(e.pointerId);
+    });
+})();
