@@ -1,0 +1,45 @@
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    /*Fonts Zen Maru Gothic ミディアムを初期で指定*/
+    font-family: "Zen Maru Gothic", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+}
+* {
+    /*Fonts Zen Maru Gothic ミディアムを初期で指定*/
+    font-family: "Zen Maru Gothic", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+}
+
+
+/*Zen Maru Gothic*/
+.zen-maru-gothic-light {
+    font-family: "Zen Maru Gothic", sans-serif;
+    font-weight: 300;
+    font-style: normal;
+}
+.zen-maru-gothic-regular {
+    font-family: "Zen Maru Gothic", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+.zen-maru-gothic-medium {
+    font-family: "Zen Maru Gothic", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+}
+.zen-maru-gothic-bold {
+    font-family: "Zen Maru Gothic", sans-serif;
+    font-weight: 700;
+    font-style: normal;
+}
+.zen-maru-gothic-black {
+    font-family: "Zen Maru Gothic", sans-serif;
+    font-weight: 900;
+    font-style: normal;
+}
