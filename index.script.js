@@ -68,12 +68,42 @@ document.addEventListener('DOMContentLoaded', function() {
     const nowdate = new Date();
     var date = nowdate.getFullYear() + '-' + (nowdate.getMonth() + 1).toString().padStart(2, '0') + '-' + nowdate.getDate().toString().padStart(2, '0');
 
-    localStorage.getItem
     var calendar = new FullCalendar.Calendar(calendarEl, {
         headerToolbar: {
-            left: 'prev,next today',
+            left: 'prev,next today addEventButton',
             center: 'title',
-            right: ''
+            right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
+        },
+        customButtons: {
+            addEventButton: {
+                text: '＋',
+                click: function() {
+                    const dialog = document.getElementById('add_event_dialog');
+                    const titleEl = document.getElementById('new_event_title');
+                    const startEl = document.getElementById('new_event_start');
+                    const endEl = document.getElementById('new_event_end');
+                    const saveBtn = document.getElementById('new_event_save');
+
+                    // 入力フィールドの初期化（現在時刻を設定）
+                    const now = new Date();
+                    const localDateTime = now.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm形式に
+                    titleEl.value = '';
+                    startEl.value = localDateTime;
+                    endEl.value = localDateTime;
+
+                    saveBtn.onclick = () => {
+                        if (!titleEl.value || !startEl.value) return;
+                        calendar.addEvent({
+                            title: titleEl.value,
+                            start: startEl.value,
+                            end: endEl.value || startEl.value
+                        });
+                        dialog.close();
+                    };
+
+                    dialog.showModal();
+                }
+            }
         },
         dayCellContent: function (arg) {
             return arg.dayNumberText.replace('日', '');
@@ -89,14 +119,107 @@ document.addEventListener('DOMContentLoaded', function() {
         // fixedWeekCount: false,
         businessHours: true,
         // weekends: false,
-        events: JSON.parse(localStorage.getItem('events'))
+        events: JSON.parse(localStorage.getItem('events')),
+        eventAdd: function() {
+            // イベント追加時にlocalStorageへ保存
+            localStorage.setItem('events', JSON.stringify(calendar.getEvents().map(ev => ({
+                title: ev.title,
+                start: ev.startStr,
+                end: ev.endStr
+            }))));
+        },
+        eventChange: function() {
+            // イベント編集時にlocalStorageへ保存
+            localStorage.setItem('events', JSON.stringify(calendar.getEvents().map(ev => ({
+                title: ev.title,
+                start: ev.startStr,
+                end: ev.endStr
+            }))));
+        },
+        eventRemove: function() {
+            // イベント削除時にlocalStorageへ保存
+            localStorage.setItem('events', JSON.stringify(calendar.getEvents().map(ev => ({
+                title: ev.title,
+                start: ev.startStr,
+                end: ev.endStr
+            }))));
+        },
+        eventClick: function(info) {
+            const dialog = document.getElementById('event_dialog');
+            const titleEl = document.getElementById('event_title');
+            const startEl = document.getElementById('event_start');
+            const endEl = document.getElementById('event_end');
+            const saveBtn = document.getElementById('event_save');
+            const deleteBtn = document.getElementById('event_delete');
+
+            titleEl.value = info.event.title;  // h3からinputに変更
+            startEl.value = info.event.start.toISOString().slice(0, 16);
+            endEl.value = info.event.end ? info.event.end.toISOString().slice(0, 16) : startEl.value;
+
+            saveBtn.onclick = () => {
+                if (!titleEl.value) return;  // タイトルが空の場合は保存しない
+                info.event.setProp('title', titleEl.value);  // タイトルを更新
+                info.event.setStart(startEl.value);
+                info.event.setEnd(endEl.value || startEl.value);
+                dialog.close();
+            };
+
+            deleteBtn.onclick = () => {
+                if (confirm('このイベントを削除してもよろしいですか？')) {
+                    info.event.remove();
+                    dialog.close();
+                }
+            };
+
+            dialog.showModal();
+        },
     });
     calendar.render();
+    calendar.updateSize();
+
+    // FullCalendarのカスタムボタンとタイトルのサイズを調整
+    const style = document.createElement('style');
+    style.textContent = `
+        .mini-calendar .fc-toolbar-title {
+            font-size: 1em !important;
+        }
+        .mini-calendar .fc-addEventButton-button {
+            font-size: 0.9em !important;
+            padding: 2px 8px !important;
+            height: 1.6em !important;
+            min-width: 1.6em !important;
+            line-height: 1.2em !important;
+        }
+        .mini-calendar .fc-button {
+            font-size: 0.9em !important;
+            padding: 2px 6px !important;
+        }
+    `;
+    document.head.appendChild(style);
 });
 
 // mini-calendarのドラッグ移動・リサイズ機能
 (function() {
     const miniCalEl = document.querySelector('.mini-calendar');
+
+    // ドラッグハンドルを追加
+    const dragHandle = document.createElement('div');
+    dragHandle.className = 'mini-calendar-drag-handle';
+    dragHandle.style.position = 'absolute';
+    dragHandle.style.top = '0';
+    dragHandle.style.left = '0';
+    dragHandle.style.right = '0';
+    dragHandle.style.height = '10px';  // 高さを10pxに調整
+    dragHandle.style.backgroundColor = 'rgba(180,180,180,0.1)';
+    dragHandle.style.cursor = 'move';
+    dragHandle.style.borderRadius = '8px 8px 0 0';
+    dragHandle.style.zIndex = '100003';
+    miniCalEl.insertBefore(dragHandle, miniCalEl.firstChild);
+
+    // カレンダー本体にパディングを追加
+    const calendarEl = document.getElementById('mini_calendar');
+    calendarEl.style.paddingTop = '10px';  // ドラッグハンドルの高さと同じ分のパディング
+
     let miniCalDrag = false;
     let miniCalResize = false;
     let miniCalDragOffsetX = 0;
@@ -121,6 +244,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ドラッグ開始
     miniCalEl.addEventListener('pointerdown', function(e) {
+        // ツールバーやボタンのクリックは無視
+        if (e.target.closest('.fc-toolbar') || e.target.closest('.fc-button')) {
+            return;
+        }
+
         // リサイズハンドル上ならリサイズ
         if (e.target === miniCalResizeHandle) {
             miniCalResize = true;
@@ -132,15 +260,15 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             return;
         }
-        // mini-calendar本体の上部20pxだけドラッグ可能にする
-        const rect = miniCalEl.getBoundingClientRect();
-        if (e.clientY - rect.top < 30) {
+
+        // ドラッグハンドル上なら移動開始
+        if (e.target === dragHandle) {
             miniCalDrag = true;
-            miniCalDragOffsetX = e.clientX - rect.left;
-            miniCalDragOffsetY = e.clientY - rect.top;
+            miniCalDragOffsetX = e.clientX - miniCalEl.offsetLeft;
+            miniCalDragOffsetY = e.clientY - miniCalEl.offsetTop;
             miniCalEl.style.position = 'fixed';
-            miniCalEl.style.left = rect.left + 'px';
-            miniCalEl.style.top = rect.top + 'px';
+            miniCalEl.style.left = miniCalEl.offsetLeft + 'px';
+            miniCalEl.style.top = miniCalEl.offsetTop + 'px';
             miniCalEl.setPointerCapture(e.pointerId);
             e.preventDefault();
         }
