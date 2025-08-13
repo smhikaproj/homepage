@@ -155,10 +155,10 @@ dialog {
 }
 .mini-calendar {
     position: fixed;
-    bottom: 10px;
+    top: 10px;
     right: 10px;
     width: 300px;
-    height: 600px;
+    height: 400px;
     background-color: #fff;
     border: 1px solid #ccc;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
