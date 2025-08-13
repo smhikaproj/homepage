@@ -45,3 +45,6 @@ body {
     font-style: normal;
 }
 
+dialog {
+    position: fixed;
+}
