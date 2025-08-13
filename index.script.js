@@ -12,4 +12,4 @@ setInterval(() => {
     if (seconds < 10) seconds = '0' + seconds;
     document.querySelector('.day').textContent = `${year}年${month}月${day}日 (${daySycle})`;
     document.querySelector('.time').textContent = `${hour}:${minutes}:${seconds}`;
-}, 50);
+}, 50); 
