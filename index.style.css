@@ -127,6 +127,7 @@ main {
     display: flex;
     justify-content: center;
     align-items: center;
+    color: #666;
 }
 .settings-show-btn:hover {
     background-color: #afafaf;
@@ -135,7 +136,7 @@ main {
 .settings-show-btn > svg {
     width: 24px;
     height: 24px;
-    
+    color: #666;
 }
 
 dialog {

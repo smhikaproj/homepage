@@ -552,3 +552,36 @@ function fromDatetimeLocalStringJST(str) {
 }
 
 updateCalendarSize();
+
+// お気に入り
+if (localStorage.getItem('favorites') == null) {
+    localStorage.setItem('favorites', JSON.stringify([
+        {"title":"Google", "url":"https://www.google.com", "icon":"https://www.google.com/favicon.ico"}
+    ]));
+    /*
+    ↓こんな感じで
+    {"title":"お気に入りのタイトル", "url":"https://example.com", "icon":"https://example.com/icon.png"}
+    */
+}
+// お気に入りの表示
+var favorites = JSON.parse(localStorage.getItem('favorites'));
+var favoritesCount = favorites.length + 1;
+for(let i = 0; i < favoritesCount; i++) {
+    const fav = favorites[i];
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.href = fav.url;
+    a.target = '_blank';
+    a.className = 'favorite-item';
+    if (fav.icon) {
+        const img = document.createElement('img');
+        img.src = fav.icon;
+        img.alt = fav.title;
+        li.appendChild(img);
+    }
+    const span = document.createElement('span');
+    span.textContent = fav.title;
+    li.appendChild(span);
+    a.appendChild(li);
+    $favorite_ul.appendChild(a);
+}

@@ -21,7 +21,44 @@
 </head>
 <body>
     <div class="dialog">
-        <dialog class="settings_dialog" id="$main_settings_dialog"></dialog>
+        <dialog class="settings_dialog" id="$main_settings_dialog">
+            <div class="settings-dialog-content">
+                <h3>設定</h3>
+                <div class="settings-options">
+                    <div class="option">
+                        <label for="theme">テーマ:</label>
+                        <select id="theme">
+                            <option value="light">ライト</option>
+                        </select>
+                    </div>
+                    <div class="option">
+                        <label for="language">言語:</label>
+                        <select id="language">
+                            <option value="ja">日本語</option>
+                        </select>
+                    </div>
+                    <div class="option">
+                        <label for="timezone">タイムゾーン:</label>
+                        <select id="timezone">
+                            <option value="Asia/Tokyo">日本 (東京)</option>
+                        </select>
+                    </div>
+                    <div class="option">
+                        <label for="dateFormat">日付フォーマット:</label>
+                        <select id="dateFormat">
+                            <option value="YYYY年MM月DD日">YYYY年MM月DD日</option>
+                        </select>
+                    </div>
+                    <div class="option">
+                        <label for="timeFormat">時間フォーマット:</label>
+                        <select id="timeFormat">
+                            <option value="HH:mm">24時間</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="$main_settings_dialog.close();">閉じる</button>
+            </div>
+        </dialog>
         <dialog class="event_dialog" id="event_dialog">
             <div class="event-dialog-content">
                 <div>
@@ -75,8 +112,8 @@
     <header>
         <div class="settings">
             <p title="設定" class="settings-show-btn" onclick="document.querySelector('.settings_dialog').show();">
-              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 960 960" width="24px" fill="#1f1f1f"><path d="m370-80-16-128q-13-5-24.5-12T307-235l-119 50L78-375l103-78q-1-7-1-13.5v-27q0-6.5 1-13.5L78-585l110-190 119 50q11-8 23-15t24-12l16-128h220l16 128q13 5 24.5 12t22.5 15l119-50 110 190-103 78q1 7 1 13.5v27q0 6.5-2 13.5l103 78-110 190-118-50q-11 8-23 15t-24 12L590-80H370Zm70-80h79l14-106q31-8 57.5-23.5T639-327l99 41 39-68-86-65q5-14 7-29.5t2-31.5q0-16-2-31.5t-7-29.5l86-65-39-68-99 42q-22-23-48.5-38.5T533-694l-13-106h-79l-14 106q-31 8-57.5 23.5T321-633l-99-41-39 68 86 64q-5 15-7 30t-2 32q0 16 2 31t7 30l-86 65 39 68 99-42q22 23 48.5 38.5T427-266l13 106Zm42-180q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Zm-2-140Z"/></svg></p>
-            
+                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="m370-80-16-128q-13-5-24.5-12T307-235l-119 50L78-375l103-78q-1-7-1-13.5v-27q0-6.5 1-13.5L78-585l110-190 119 50q11-8 23-15t24-12l16-128h220l16 128q13 5 24.5 12t22.5 15l119-50 110 190-103 78q1 7 1 13.5v27q0 6.5-2 13.5l103 78-110 190-118-50q-11 8-23 15t-24 12L590-80H370Zm70-80h79l14-106q31-8 57.5-23.5T639-327l99 41 39-68-86-65q5-14 7-29.5t2-31.5q0-16-2-31.5t-7-29.5l86-65-39-68-99 42q-22-23-48.5-38.5T533-694l-13-106h-79l-14 106q-31 8-57.5 23.5T321-633l-99-41-39 68 86 64q-5 15-7 30t-2 32q0 16 2 31t7 30l-86 65 39 68 99-42q22 23 48.5 38.5T427-266l13 106Zm42-180q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Zm-2-140Z"/></svg>
+            </p>
         </div>
         <div class="eventday"></div>
     </header>
@@ -92,13 +129,15 @@
                     <input type="hidden" name="oe" value="UTF-8">
                     <input type="hidden" name="hl" value="ja">
                     <button type="submit" class="search-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 960 960" width="24px" fill="#1f1f1f"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/></svg>
                     </button>
                 </form>
             </div>
         </div>
         <div class="center-sub">
-            <div class="favorite"></div>
+            <div class="favorite">
+                <ul id="$favorite_ul"></ul>
+            </div>
         </div>
     </main>
     
