@@ -1,11 +1,58 @@
 if (localStorage.getItem('events') == null) {
     localStorage.setItem('events', JSON.stringify([
-        { "title": "夏休み", "start": "2025-07-19", "end": "2025-08-31" },
-        { "title": "夏季授業日", "start": "2025-08-27", "end": "2025-08-29" },
-        { "title": "8月実力考査", "start": "2025-8-28", "end": "2025-8-29" }
+        {"title":"夏季授業日","start":"2025-08-27T08:20","end":"2025-08-29T17:00"},
+        {"title":"実力考査","start":"2025-08-28T08:20","end":"2025-08-29T17:00"}
     ]));
 }
 
+// イベントデータのend日付を+1日する関数
+function adjustEndDateForFullCalendar(event) {
+    if (!event.end) return event;
+    // endが日付のみ（時刻なし）の場合のみ+1日
+    if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(event.end)) {
+        const endDate = new Date(event.end);
+        endDate.setDate(endDate.getDate() + 1);
+        return { ...event, end: endDate.toISOString().slice(0, 10) };
+    }
+    // datetimeの場合はそのまま
+    return event;
+}
+
+// FullCalendarから取得したイベントを保存する際にendを-1日戻す
+function adjustEndDateForStorage(event) {
+    if (!event.end) return event;
+    // endが日付のみ（時刻なし）の場合のみ-1日
+    if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(event.end)) {
+        const endDate = new Date(event.end);
+        endDate.setDate(endDate.getDate() - 1);
+        return { ...event, end: endDate.toISOString().slice(0, 10) };
+    }
+    // datetimeの場合はそのまま
+    return event;
+}
+
+// 既存データのend日付を+1日補正（初回のみ）
+(function fixStoredEvents() {
+    let events = JSON.parse(localStorage.getItem('events') || '[]');
+    let changed = false;
+    events = events.map(ev => {
+        if (ev.end && /^\d{4}-\d{1,2}-\d{1,2}$/.test(ev.end)) {
+            const start = new Date(ev.start);
+            const end = new Date(ev.end);
+            // end > start かつ endとstartが同じでない場合のみ補正
+            if (end > start) {
+                const endPlus1 = new Date(end);
+                endPlus1.setDate(endPlus1.getDate() + 1);
+                changed = true;
+                return { ...ev, end: endPlus1.toISOString().slice(0, 10) };
+            }
+        }
+        return ev;
+    });
+    if (changed) {
+        localStorage.setItem('events', JSON.stringify(events));
+    }
+})();
 
 setInterval(() => {
     const date = new Date();
@@ -62,11 +109,20 @@ dialog.addEventListener('pointerup', function(event) {
 });
 
 // 左上のミニカレンダー
-document.addEventListener('DOMContentLoaded', function() {
+// document.addEventListener('DOMContentLoaded', function() {
     var calendarEl = document.getElementById('mini_calendar');
 
+    // ↓ここでnowdateとdateを定義
     const nowdate = new Date();
     var date = nowdate.getFullYear() + '-' + (nowdate.getMonth() + 1).toString().padStart(2, '0') + '-' + nowdate.getDate().toString().padStart(2, '0');
+
+    // ローカルストレージからイベントを読み込み、FullCalendar用に変換
+    let events = [];
+    try {
+        events = JSON.parse(localStorage.getItem('events') || '[]').map(parseEventForCalendar);
+    } catch (e) {
+        events = [];
+    }
 
     var calendar = new FullCalendar.Calendar(calendarEl, {
         headerToolbar: {
@@ -84,20 +140,39 @@ document.addEventListener('DOMContentLoaded', function() {
                     const endEl = document.getElementById('new_event_end');
                     const saveBtn = document.getElementById('new_event_save');
 
-                    // 入力フィールドの初期化（現在時刻を設定）
+                    // 入力フィールドの初期化（現在時刻をJSTで設定）
                     const now = new Date();
-                    const localDateTime = now.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm形式に
+                    const localDateTime = toDatetimeLocalStringJST(now);
                     titleEl.value = '';
                     startEl.value = localDateTime;
                     endEl.value = localDateTime;
 
                     saveBtn.onclick = () => {
                         if (!titleEl.value || !startEl.value) return;
-                        calendar.addEvent({
-                            title: titleEl.value,
-                            start: startEl.value,
-                            end: endEl.value || startEl.value
-                        });
+                        let startVal = startEl.value;
+                        let endVal = endEl.value || startVal;
+
+                        // 終日イベント（時刻が00:00）ならYYYY-MM-DDで保存
+                        const isAllDay = startVal.length === 10 && endVal.length === 10;
+                        let eventObj;
+                        if (isAllDay) {
+                            // endは+1日して渡す
+                            const endDate = new Date(endVal);
+                            endDate.setDate(endDate.getDate() + 1);
+                            eventObj = {
+                                title: titleEl.value,
+                                start: startVal,
+                                end: endDate.toISOString().slice(0, 10),
+                                allDay: true
+                            };
+                        } else {
+                            eventObj = {
+                                title: titleEl.value,
+                                start: fromDatetimeLocalStringJST(startVal),
+                                end: fromDatetimeLocalStringJST(endVal)
+                            };
+                        }
+                        calendar.addEvent(eventObj);
                         dialog.close();
                     };
 
@@ -113,36 +188,30 @@ document.addEventListener('DOMContentLoaded', function() {
         initialDate: date,
         editable: true,
         selectable: true,
-        dayMaxEvents: true, // allow "more" link when too many events
-        // multiMonthMaxColumns: 1, // guarantee single column
+        dayMaxEvents: true,
+        // multiMonthMaxColumns: 1,
         // showNonCurrentDates: true,
         // fixedWeekCount: false,
         businessHours: true,
         // weekends: false,
-        events: JSON.parse(localStorage.getItem('events')),
+        events: events,
         eventAdd: function() {
             // イベント追加時にlocalStorageへ保存
-            localStorage.setItem('events', JSON.stringify(calendar.getEvents().map(ev => ({
-                title: ev.title,
-                start: ev.startStr,
-                end: ev.endStr
-            }))));
+            localStorage.setItem('events', JSON.stringify(
+                calendar.getEvents().map(eventForStorage)
+            ));
         },
         eventChange: function() {
             // イベント編集時にlocalStorageへ保存
-            localStorage.setItem('events', JSON.stringify(calendar.getEvents().map(ev => ({
-                title: ev.title,
-                start: ev.startStr,
-                end: ev.endStr
-            }))));
+            localStorage.setItem('events', JSON.stringify(
+                calendar.getEvents().map(eventForStorage)
+            ));
         },
         eventRemove: function() {
             // イベント削除時にlocalStorageへ保存
-            localStorage.setItem('events', JSON.stringify(calendar.getEvents().map(ev => ({
-                title: ev.title,
-                start: ev.startStr,
-                end: ev.endStr
-            }))));
+            localStorage.setItem('events', JSON.stringify(
+                calendar.getEvents().map(eventForStorage)
+            ));
         },
         eventClick: function(info) {
             const dialog = document.getElementById('event_dialog');
@@ -152,15 +221,47 @@ document.addEventListener('DOMContentLoaded', function() {
             const saveBtn = document.getElementById('event_save');
             const deleteBtn = document.getElementById('event_delete');
 
-            titleEl.value = info.event.title;  // h3からinputに変更
-            startEl.value = info.event.start.toISOString().slice(0, 16);
-            endEl.value = info.event.end ? info.event.end.toISOString().slice(0, 16) : startEl.value;
+            titleEl.value = info.event.title;
+
+            // 終日イベントかどうか
+            if (info.event.allDay) {
+                // FullCalendarはend=翌日なので-1日して表示
+                const startStr = info.event.startStr.slice(0, 10);
+                let endStr = info.event.endStr ? info.event.endStr.slice(0, 10) : startStr;
+                if (info.event.end) {
+                    const endDate = new Date(info.event.end);
+                    endDate.setDate(endDate.getDate() - 1);
+                    endStr = toDatetimeLocalStringJST(endDate).slice(0, 10);
+                }
+                startEl.value = startStr + 'T00:00';
+                endEl.value = endStr + 'T00:00';
+            } else {
+                startEl.value = toDatetimeLocalStringJST(info.event.start);
+                endEl.value = info.event.end ? toDatetimeLocalStringJST(info.event.end) : startEl.value;
+            }
 
             saveBtn.onclick = () => {
-                if (!titleEl.value) return;  // タイトルが空の場合は保存しない
-                info.event.setProp('title', titleEl.value);  // タイトルを更新
-                info.event.setStart(startEl.value);
-                info.event.setEnd(endEl.value || startEl.value);
+                if (!titleEl.value) return;
+                info.event.setProp('title', titleEl.value);
+
+                const startVal = startEl.value;
+                const endVal = endEl.value || startVal;
+                const isAllDay = startVal.endsWith('T00:00') && endVal.endsWith('T00:00');
+
+                if (isAllDay) {
+                    // 終日イベントとして更新
+                    const startDate = startVal.slice(0, 10);
+                    const endDate = new Date(endVal.slice(0, 10));
+                    endDate.setDate(endDate.getDate() + 1); // FullCalendar用に+1日
+                    info.event.setAllDay(true);
+                    info.event.setStart(startDate);
+                    info.event.setEnd(endDate.toISOString().slice(0, 10));
+                } else {
+                    // 時間付きイベント
+                    info.event.setAllDay(false);
+                    info.event.setStart(fromDatetimeLocalStringJST(startVal));
+                    info.event.setEnd(fromDatetimeLocalStringJST(endVal));
+                }
                 dialog.close();
             };
 
@@ -196,7 +297,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     `;
     document.head.appendChild(style);
-});
+// });
+
+function updateCalendarSize() {
+        calendar.updateSize();
+};
+
 
 // mini-calendarのドラッグ移動・リサイズ機能
 (function() {
@@ -209,16 +315,78 @@ document.addEventListener('DOMContentLoaded', function() {
     dragHandle.style.top = '0';
     dragHandle.style.left = '0';
     dragHandle.style.right = '0';
-    dragHandle.style.height = '10px';  // 高さを10pxに調整
+    dragHandle.style.height = '20px';
     dragHandle.style.backgroundColor = 'rgba(180,180,180,0.1)';
     dragHandle.style.cursor = 'move';
     dragHandle.style.borderRadius = '8px 8px 0 0';
     dragHandle.style.zIndex = '100003';
+    dragHandle.style.display = 'flex';
+    dragHandle.style.justifyContent = 'flex-end';
+    dragHandle.style.alignItems = 'center';
+
+    // 全画面ボタンを追加
+    const fullscreenBtn = document.createElement('button');
+    fullscreenBtn.className = 'mini-calendar-fullscreen-btn';
+    fullscreenBtn.title = '全画面表示';
+    fullscreenBtn.innerHTML = `
+        <svg viewBox="0 0 24 24">
+            <path d="M4 4h7V2H2v9h2V4zm13 0v2h3v7h2V2h-7v2zm3 13h-3v2h7v-7h-2v5zm-13-3H2v7h7v-2H4v-5z"/>
+        </svg>
+    `;
+    dragHandle.appendChild(fullscreenBtn);
+
+    // 全画面切り替え処理
+    let isFullscreen = false;
+    let prevStyle = {};
+    fullscreenBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!isFullscreen) {
+            // 保存
+            prevStyle = {
+                left: miniCalEl.style.left,
+                top: miniCalEl.style.top,
+                width: miniCalEl.style.width,
+                height: miniCalEl.style.height,
+                position: miniCalEl.style.position,
+                zIndex: miniCalEl.style.zIndex
+            };
+            miniCalEl.style.position = 'fixed';
+            miniCalEl.style.left = '0';
+            miniCalEl.style.top = '0';
+            miniCalEl.style.width = '100vw';
+            miniCalEl.style.height = '100vh';
+            miniCalEl.style.zIndex = '100010';
+            isFullscreen = true;
+            fullscreenBtn.title = '元に戻す';
+            fullscreenBtn.innerHTML = `
+                <svg viewBox="0 0 24 24">
+                    <path d="M15 3h6v6h-2V5h-4V3zm-6 0v2H5v4H3V3h6zm6 18v-2h4v-4h2v6h-6zm-6 0H3v-6h2v4h4v2z"/>
+                </svg>
+            `;
+            updateCalendarSize();
+        } else {
+            miniCalEl.style.left = prevStyle.left;
+            miniCalEl.style.top = prevStyle.top;
+            miniCalEl.style.width = prevStyle.width;
+            miniCalEl.style.height = prevStyle.height;
+            miniCalEl.style.position = prevStyle.position;
+            miniCalEl.style.zIndex = prevStyle.zIndex;
+            isFullscreen = false;
+            fullscreenBtn.title = '全画面表示';
+            fullscreenBtn.innerHTML = `
+                <svg viewBox="0 0 24 24">
+                    <path d="M4 4h7V2H2v9h2V4zm13 0v2h3v7h2V2h-7v2zm3 13h-3v2h7v-7h-2v5zm-13-3H2v7h7v-2H4v-5z"/>
+                </svg>
+            `;
+            updateCalendarSize();
+        }
+    });
+
     miniCalEl.insertBefore(dragHandle, miniCalEl.firstChild);
 
     // カレンダー本体にパディングを追加
     const calendarEl = document.getElementById('mini_calendar');
-    calendarEl.style.paddingTop = '10px';  // ドラッグハンドルの高さと同じ分のパディング
+    calendarEl.style.paddingTop = '20px';  // ドラッグハンドルの高さと同じ分のパディング
 
     let miniCalDrag = false;
     let miniCalResize = false;
@@ -279,9 +447,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (miniCalDrag) {
             let newLeft = e.clientX - miniCalDragOffsetX;
             let newTop = e.clientY - miniCalDragOffsetY;
-            // 画面外に出ないように制限
-            newLeft = Math.max(0, Math.min(window.innerWidth - miniCalEl.offsetWidth, newLeft));
-            newTop = Math.max(0, Math.min(window.innerHeight - miniCalEl.offsetHeight, newTop));
+            // 画面外制限を削除
             miniCalEl.style.left = newLeft + 'px';
             miniCalEl.style.top = newTop + 'px';
         }
@@ -302,3 +468,87 @@ document.addEventListener('DOMContentLoaded', function() {
         miniCalEl.releasePointerCapture(e.pointerId);
     });
 })();
+
+// イベントデータをFullCalendar用に変換
+function parseEventForCalendar(ev) {
+    // 終日イベント（YYYY-MM-DD形式）の場合
+    if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(ev.start)) {
+        // endもYYYY-MM-DDなら+1日して渡す
+        let end = ev.end;
+        if (end && /^\d{4}-\d{1,2}-\d{1,2}$/.test(end)) {
+            const endDate = new Date(end);
+            endDate.setDate(endDate.getDate() + 1);
+            end = endDate.toISOString().slice(0, 10);
+        }
+        return {
+            title: ev.title,
+            start: ev.start,
+            end: end,
+            allDay: true
+        };
+    }
+    // 時間付きイベント
+    return {
+        title: ev.title,
+        start: ev.start,
+        end: ev.end
+    };
+}
+
+// FullCalendarのイベントをローカルストレージ用に変換
+function eventForStorage(ev) {
+    // allDayならYYYY-MM-DD形式で保存
+    if (ev.allDay) {
+        // endは-1日して保存
+        let end = ev.end;
+        if (end) {
+            const endDate = new Date(end);
+            endDate.setDate(endDate.getDate() - 1);
+            end = endDate.toISOString().slice(0, 10);
+        }
+        return {
+            title: ev.title,
+            start: ev.startStr.slice(0, 10),
+            end: end
+        };
+    }
+    // 時間付きイベントはISO文字列（JST）で保存
+    return {
+        title: ev.title,
+        start: toISOStringJST(ev.start),
+        end: ev.end ? toISOStringJST(ev.end) : undefined
+    };
+}
+
+// JSTでISO8601文字列（YYYY-MM-DDTHH:mm）を返す
+function toISOStringJST(date) {
+    if (!date) return '';
+    const y = date.getFullYear();
+    const m = (date.getMonth() + 1).toString().padStart(2, '0');
+    const d = date.getDate().toString().padStart(2, '0');
+    const h = date.getHours().toString().padStart(2, '0');
+    const min = date.getMinutes().toString().padStart(2, '0');
+    return `${y}-${m}-${d}T${h}:${min}`;
+}
+
+// input[type=datetime-local]用のJST文字列
+function toDatetimeLocalStringJST(date) {
+    if (!date) return '';
+    const y = date.getFullYear();
+    const m = (date.getMonth() + 1).toString().padStart(2, '0');
+    const d = date.getDate().toString().padStart(2, '0');
+    const h = date.getHours().toString().padStart(2, '0');
+    const min = date.getMinutes().toString().padStart(2, '0');
+    return `${y}-${m}-${d}T${h}:${min}`;
+}
+
+// input[type=datetime-local]の値をJSTのDateに変換
+function fromDatetimeLocalStringJST(str) {
+    if (!str) return null;
+    const [date, time] = str.split('T');
+    const [y, m, d] = date.split('-').map(Number);
+    const [hh, mm] = time.split(':').map(Number);
+    return new Date(y, m - 1, d, hh, mm, 0, 0);
+}
+
+updateCalendarSize();

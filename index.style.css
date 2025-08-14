@@ -229,3 +229,28 @@ dialog {
 .event-buttons button:hover {
     background: #f0f0f0;
 }
+.mini-calendar-drag-handle {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+.mini-calendar-fullscreen-btn {
+    width: 24px;
+    height: 24px;
+    margin-right: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+.mini-calendar-fullscreen-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: #666;
+}
+.mini-calendar-fullscreen-btn:hover svg {
+    fill: #222;
+}
