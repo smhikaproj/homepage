@@ -316,3 +316,38 @@ dialog {
     width: 32px;
     height: 32px;
 }
+.license-section {
+    margin-top: 24px;
+    padding: 12px 10px;
+    background: #f8f8fa;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+.license-section h4 {
+    margin: 0 0 8px 0;
+    font-size: 1.1em;
+    color: #333;
+}
+.license-fullcalendar {
+    font-size: 0.95em;
+    color: #444;
+    line-height: 1.5;
+}
+.license-fullcalendar pre {
+    background: #f4f4f4;
+    border-radius: 6px;
+    padding: 8px;
+    font-size: 0.85em;
+    overflow-x: auto;
+    margin-top: 8px;
+    color: #555;
+}
+.license-fullcalendar a {
+    color: #1976d2;
+    text-decoration: underline;
+    font-size: 0.95em;
+}
+.license-fullcalendar strong {
+    font-weight: bold;
+    color: #222;
+}

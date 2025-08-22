@@ -76,8 +76,9 @@ setInterval(() => {
     document.querySelector('.time').textContent = `${hour}:${minutes}:${seconds}`;
 }, 50);
 
-// 設定ダイアログのドラッグ機能
-const dialog = document.getElementById('$main_settings_dialog');
+// 情報ダイアログのドラッグ機能
+// 設定ダイアログ→情報ダイアログ 変更
+/*const dialog = document.getElementById('$main_settings_dialog');
 let drag = false;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
@@ -103,17 +104,14 @@ dialog.addEventListener('pointermove', function(event) {
     dialog.style.left = newLeft + 'px';
     dialog.style.top = newTop + 'px';
     // ↓コメントアウトはずしたら、画面外へ行かないようにできる
-    /*
-    newLeft = Math.max(0, Math.min(window.innerWidth - dialog.offsetWidth, newLeft));
-    newTop = Math.max(0, Math.min(window.innerHeight - dialog.offsetHeight, newTop));
-    */
+    // newLeft = Math.max(0, Math.min(window.innerWidth - dialog.offsetWidth, newLeft));newTop = Math.max(0, Math.min(window.innerHeight - dialog.offsetHeight, newTop));
 });
 
 dialog.addEventListener('pointerup', function(event) {
     drag = false;
     dialog.releasePointerCapture(event.pointerId);
 });
-
+*/
 // 左上のミニカレンダー
 // document.addEventListener('DOMContentLoaded', function() {
     var calendarEl = document.getElementById('mini_calendar');
