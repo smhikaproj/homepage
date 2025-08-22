@@ -1,10 +1,13 @@
+var default_events = [
+    {"title":"夏季授業日","start":"2025-08-27T08:20","end":"2025-08-29T17:00"},
+    {"title":"実力考査","start":"2025-08-28T08:20","end":"2025-08-29T17:00"}
+];
 if (localStorage.getItem('events') == null) {
-    localStorage.setItem('events', JSON.stringify([
-        {"title":"夏季授業日","start":"2025-08-27T08:20","end":"2025-08-29T17:00"},
-        {"title":"実力考査","start":"2025-08-28T08:20","end":"2025-08-29T17:00"}
-    ]));
+    localStorage.setItem('events', JSON.stringify([]));
 }
 
+// JSON結合コマンド
+function JSONmerge(target, source, opts) {const isObject = obj => obj && typeof obj === 'object' && !Array.isArray(obj);const isConcatArray = opts && opts.concatArray;let result = Object.assign({}, target);if (isObject(target) && isObject(source)) {for (const [sourceKey, sourceValue] of Object.entries(source)) {const targetValue = target[sourceKey];if (isConcatArray && Array.isArray(sourceValue) && Array.isArray(targetValue)) {result[sourceKey] = targetValue.concat(...sourceValue);}else if (isObject(sourceValue) && target.hasOwnProperty(sourceKey)) {result[sourceKey] = mergeDeeply(targetValue, sourceValue, opts);} else {Object.assign(result, {[sourceKey]: sourceValue});}}}return result;}
 // イベントデータのend日付を+1日する関数
 function adjustEndDateForFullCalendar(event) {
     if (!event.end) return event;
@@ -33,8 +36,11 @@ function adjustEndDateForStorage(event) {
 
 // 既存データのend日付を+1日補正（初回のみ）
 (function fixStoredEvents() {
-    let events = JSON.parse(localStorage.getItem('events') || '[]');
+    let events = JSONmerge(JSON.parse(localStorage.getItem('events')), default_events);
     let changed = false;
+    if (!Array.isArray(events)) {
+        events = [];
+    }
     events = events.map(ev => {
         if (ev.end && /^\d{4}-\d{1,2}-\d{1,2}$/.test(ev.end)) {
             const start = new Date(ev.start);
@@ -556,7 +562,7 @@ updateCalendarSize();
 // お気に入り
 if (localStorage.getItem('favorites') == null) {
     localStorage.setItem('favorites', JSON.stringify([
-        {"title":"Google", "url":"https://www.google.com", "icon":"https://www.google.com/favicon.ico"}
+        {"title":"Deepl", "url":"https://www.deepl.com/ja/translator", "icon":"https://www.deepl.com/favicon.ico"}
     ]));
     /*
     ↓こんな感じで
